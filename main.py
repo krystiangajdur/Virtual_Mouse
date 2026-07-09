@@ -14,12 +14,14 @@ while True:
     ret, frame = capture.read()
 
 
-
     roi = frame[0:300, 0:300]
 
-    roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
-    ret1, thresh = cv2.threshold(roi_gray, 100, 255, cv2.THRESH_BINARY)
+    lower_limit = np.array([0, 30, 80], dtype = 'uint8')
+    upper_limit = np.array([18, 255, 255], dtype = 'uint8')
+
+    thresh = cv2.inRange(roi_hsv, lower_limit, upper_limit)
 
     fd, hog_image = hog(
         thresh,
@@ -38,10 +40,10 @@ while True:
 
     cv2.rectangle(frame, (0,0), (300, 300), (0, 255, 0), 3)
 
-    cv2.imshow('Image', frame)
-    cv2.imshow('Gray_hand', roi_gray)
+    cv2.imshow('image', frame)
+    cv2.imshow('HSV_image', roi_hsv)
     cv2.imshow('HOG_visualization', hog_image_rescaled)
-    cv2.imshow('Thresh', thresh)
+    cv2.imshow('THRESH_image', thresh)
 
 
     key = cv2.waitKey(1) & 0xFF
