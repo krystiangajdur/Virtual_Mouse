@@ -23,6 +23,9 @@ while True:
 
     thresh = cv2.inRange(roi_hsv, lower_limit, upper_limit)
 
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+
     fd, hog_image = hog(
         thresh,
         orientations = 9,
