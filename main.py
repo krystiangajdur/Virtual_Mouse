@@ -4,6 +4,9 @@ from skimage.feature import hog
 
 capture = cv2.VideoCapture(0)
 
+training_data = []
+label = []
+
 while True:
     ret, frame = capture.read()
 
@@ -27,10 +30,28 @@ while True:
     cv2.imshow('Gray_hand', roi_gray)
     cv2.imshow('HOG_visualization', hog_image_rescaled)
 
-    if cv2.waitKey(1) == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+
+    if key == ord('q'):
         break
+    elif key == ord('z'):
+        training_data.append(fd)
+        label.append('opened')
+        print('OPENED hand added, index:', len(label))
+    elif key == ord('c'):
+        training_data.append(fd)
+        label.append('closed')
+        print('CLOSED hand added, index: ', len(label))
+
 
 capture.release()
+
+x = np.array(training_data)
+y = np.array(label)
+
+np.save('x_data.npy', x)
+np.save('y_data.npy', y)
+print('Data has been saved.')
 
 cv2.destroyAllWindows()
 

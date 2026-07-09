@@ -1,0 +1,4 @@
+*.npy
+*.pkl
+venv/
+.idea/
