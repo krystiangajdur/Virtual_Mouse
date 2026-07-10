@@ -1,104 +1,65 @@
 import cv2
 import numpy as np
-from skimage.feature import hog
-import joblib
+import mediapipe as mp
+
+mp_hands = mp.solutions.hands
+hands = mp.solutions.hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
+mp_drawing = mp.solutions.drawing_utils
 
 capture = cv2.VideoCapture(0)
-
-def nothing(x):
-    pass
-
-cv2.namedWindow("Calibration", cv2.WINDOW_NORMAL)
-
-cv2.createTrackbar("L-H", "Calibration", 0, 179, nothing)   # Lower Hue
-cv2.createTrackbar("L-S", "Calibration", 30, 255, nothing)  # Lower Saturation
-cv2.createTrackbar("L-V", "Calibration", 80, 255, nothing)  # Lower Value
-
-cv2.createTrackbar("U-H", "Calibration", 18, 179, nothing)  # Upper Hue
-cv2.createTrackbar("U-S", "Calibration", 255, 255, nothing) # Upper Saturation
-cv2.createTrackbar("U-V", "Calibration", 255, 255, nothing) # Upper Value
-
-model = joblib.load('svm_hand_model.pkl')
-
 training_data = []
 label = []
 
 while True:
     ret, frame = capture.read()
-    roi = frame[0:300, 0:300]
-    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 
+    frame = cv2.flip(frame, 1)
+    h, w, _ = frame.shape
 
-    lh = cv2.getTrackbarPos("L-H", "Calibration") #Sets the minimum color shade
-    ls = cv2.getTrackbarPos("L-S", "Calibration") #Sets the minimum color intensity
-    lv = cv2.getTrackbarPos("L-V", "Calibration") #Sets the minimum brightness
-                                                                      #Sets the same but the maximum level:
-    uh = cv2.getTrackbarPos("U-H", "Calibration")
-    us = cv2.getTrackbarPos("U-S", "Calibration")
-    uv = cv2.getTrackbarPos("U-V", "Calibration")
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = hands.process(rgb_frame)
 
+    current_features = None
 
-    lower_limit = np.array([lh, ls, lv], dtype="uint8")
-    upper_limit = np.array([uh, us, uv], dtype="uint8")
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-    thresh = cv2.inRange(roi_hsv, lower_limit, upper_limit) #thresh means white or black
+            hand_features = []
+            for lm in hand_landmarks.landmark:
+                hand_features.append(lm.x)
+                hand_features.append(lm.y)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+            current_features = hand_features
 
-    fd, hog_image = hog(
-        thresh,
-        orientations = 9,
-        pixels_per_cell = (8,8),
-        cells_per_block = (2,2),
-        visualize = True
-    )
+    cv2.imshow('Virtual_Mouse-Test', frame)
 
-    hog_image_rescaled = np.uint8(hog_image * 255)
-
-    prediction = model.predict([fd])
-
-    gesture = prediction[0]
-    cv2.putText(frame, f'{gesture}', (10, 340), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-    cv2.rectangle(frame, (0,0), (300, 300), (0, 255, 0), 3)
-
-    cv2.imshow('image', frame)
-    #cv2.imshow('HSV_image', roi_hsv)
-    #cv2.imshow('HOG_visualization', hog_image_rescaled)
-    cv2.imshow('THRESH_image', thresh)
-
-
-    key = cv2.waitKey(1)
+    key = cv2.waitKey(50)
 
     if key == ord('q'):
         break
-    elif key == ord('z'):
-        training_data.append(fd)
+    elif key == ord('z') and current_features is not None:
+        training_data.append(current_features)
         label.append('opened')
-        print('OPENED hand added, index:', len(label))
-    elif key == ord('c'):
-        training_data.append(fd)
+        print('OPENED added, total:', len(label))
+    elif key == ord('x') and current_features is not None:
+        training_data.append(current_features)
         label.append('closed')
-        print('CLOSED hand added, index: ', len(label))
-    elif key == ord('x'):
-        training_data.append(fd)
+        print('CLOSED added, total:', len(label))
+    elif key == ord('c') and current_features is not None:
+        training_data.append(current_features)
         label.append('nothing')
-        print('NOTHING added, index:', len(label))
+        print('NOTHING added, total:', len(label))
 
 
 capture.release()
-
-x = np.array(training_data)
-y = np.array(label)
-
-np.save('x_data.npy', x)
-np.save('y_data.npy', y)
-print('Data has been saved.')
-
 cv2.destroyAllWindows()
 
 
+x = np.array(training_data)
+y = np.array(label)
+np.save('x_data.npy', x)
+np.save('y_data.npy', y)
+print('Data saved successfully!')
 
 
