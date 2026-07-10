@@ -48,14 +48,16 @@ while True:
             input_data = np.array([hand_features])
             prediction = model.predict(input_data)
             label = prediction[0]
-            mouse_x = int(finger_x * screen_w)
-            mouse_y = int(finger_y * screen_h)
+
+            margin = 0.2
+            mouse_x = int(np.interp(finger_x, [margin, 1.0 - margin], [0, screen_w]))
+            mouse_y = int(np.interp(finger_y, [margin, 1.0 - margin], [0, screen_h]))
 
     if label == 'opened':
         cv2.putText(frame, 'Hand opened - moving', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
         pyautogui.moveTo(mouse_x, mouse_y)
     elif label == 'closed':
-        cv2.putText(frame, 'Hand opened - moving', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
+        cv2.putText(frame, 'Hand closed - clicking', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
         pyautogui.click()
         cv2.waitKey(200)
     cv2.imshow('TEST MODELU SVM', frame)
