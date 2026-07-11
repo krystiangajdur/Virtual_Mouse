@@ -7,12 +7,16 @@ import joblib
 pyautogui.FAILSAFE = True
 screen_w, screen_h = pyautogui.size()
 
+prev_x = 0
+prev_y = 0
+
 model = joblib.load('svm_hand_model.pkl')
 print('SVM Model loaded.')
 
 mp_hands = mp.solutions.hands
 hands = mp.solutions.hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
 mp_drawing = mp.solutions.drawing_utils
+
 
 capture = cv2.VideoCapture(0)
 
@@ -49,13 +53,21 @@ while True:
             prediction = model.predict(input_data)
             label = prediction[0]
 
-            margin = 0.2
-            mouse_x = int(np.interp(finger_x, [margin, 1.0 - margin], [0, screen_w]))
-            mouse_y = int(np.interp(finger_y, [margin, 1.0 - margin], [0, screen_h]))
-
     if label == 'opened':
-        cv2.putText(frame, 'Hand opened - moving', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
-        pyautogui.moveTo(mouse_x, mouse_y)
+        cv2.putText(frame, 'Hand opened - Moving', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
+
+        margin = 0.2
+        mouse_x = int(np.interp(finger_x, [margin, 1.0 - margin], [0, screen_w]))
+        mouse_y = int(np.interp(finger_y, [margin, 1.0 - margin], [0, screen_h]))
+
+        smoothening = 3
+        cloc_x = prev_x + (mouse_x - prev_x) / smoothening
+        cloc_y = prev_y + (mouse_y - prev_y) / smoothening
+
+        pyautogui.moveTo(int(cloc_x), int(cloc_y))
+
+        prev_x, prev_y = cloc_x, cloc_y
+
     elif label == 'closed':
         cv2.putText(frame, 'Hand closed - clicking', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
         pyautogui.click()

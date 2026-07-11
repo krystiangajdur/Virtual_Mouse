@@ -40,7 +40,7 @@ while True:
         cv2.putText(frame, 'Hand opened', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
     elif label == 'closed':
         cv2.putText(frame, 'Hand closed', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
-    elif label == 'nothing':
+    elif label == 'wrong':
         cv2.putText(frame, 'Wrong gesture', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3, cv2.LINE_AA)
     else:
         cv2.putText(frame, 'No hand', (30, h - 30), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3, cv2.LINE_AA)
