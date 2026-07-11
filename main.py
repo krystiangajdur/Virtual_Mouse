@@ -46,11 +46,6 @@ while True:
         training_data.append(current_features)
         label.append('closed')
         print('CLOSED added, total:', len(label))
-    elif key == ord('c') and current_features is not None:
-        training_data.append(current_features)
-        label.append('wrong')
-        print('WRONG added, total:', len(label))
-
 
 capture.release()
 cv2.destroyAllWindows()
